@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import asyncio
 from Message_Handling import message
 from DataBase import set_player_message
 from Variables import BOT_TOKEN
@@ -61,6 +62,32 @@ async def mark(ctx):
         set_player_message(player_id, message_mark)
         await ctx.send(f"Message for player ID: {player_id} Has been marked: {message_mark}")
 
+    except Exception as e:
+        await ctx.send(f"Error: {str(e)}")
+
+#########################################################################################
+
+@bot.command()
+async def monitor(ctx):
+    await ctx.send("Enter BattleMetrics server URL:")
+    def check(m):
+        return m.author == ctx.author and isinstance(m.channel, discord.TextChannel)
+    try:
+        user_input = await bot.wait_for('message', check=check, timeout=30.0)
+        url = user_input.content.strip()
+        
+        display_msg = await ctx.send("Fetching server data...")
+
+        while True:
+            server_player_info, marked_players = message(url)
+
+            content = f"```\n{server_player_info}\nMarked Players:\n{marked_players}```"
+            
+            if len(content) > 1990:
+                content = content[:1990] + "...\n```"
+
+            await display_msg.edit(content=content)
+            await asyncio.sleep(30)
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
 
