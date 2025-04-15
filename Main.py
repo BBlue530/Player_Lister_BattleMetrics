@@ -85,8 +85,9 @@ async def scan(ctx):
         user_input = await bot.wait_for('message', check=check, timeout=30.0)
         url = user_input.content.strip()
 
-        server_player_info, marked_players = message(url)
-        player_content = f"Server Players:\n{server_player_info}"
+        server_player_info, marked_players, server_info = message(url)
+        await ctx.send(f"```{server_info}```")
+        player_content = f"\n{server_player_info}"
         max_chunk = 1500
         pages = [f"```\n{player_content[i:i+max_chunk]}\n```" for i in range(0, len(player_content), max_chunk)]
 
@@ -94,7 +95,7 @@ async def scan(ctx):
         view.message = await ctx.send(pages[0], view=view)
 
         if marked_players.strip():
-            await ctx.send(f"```Marked Players:\n{marked_players}```")
+            await ctx.send(f"```\n{marked_players}```")
 
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
@@ -128,45 +129,56 @@ async def mark(ctx):
 @bot.command()
 async def monitor(ctx):
     await ctx.send("Enter BattleMetrics server URL:")
+
     def check(m):
         return m.author == ctx.author and isinstance(m.channel, discord.TextChannel)
+
     try:
         user_input = await bot.wait_for('message', check=check, timeout=30.0)
         url = user_input.content.strip()
-        
-        player_data = await ctx.send("Fetching server data...")
+
+        view = None
+        player_data = None
+        marked_player_data = None
+        server_info_player_count = None
 
         while True:
-            sent_messages = []
-            server_player_info, marked_players = message(url)
+            server_player_info, marked_players, server_info = message(url)
+            player_content = f"\n{server_player_info}"
+            max_chunk = 1500
+            pages = [f"```\n{player_content[i:i+max_chunk]}\n```" for i in range(0, len(player_content), max_chunk)]
 
-            player_content = f"Server Players:\n{server_player_info}"
-            max_chunk = 1990
-            player_chunks = [f"```\n{player_content[i:i+max_chunk]}\n```" for i in range(0, len(player_content), max_chunk)]
-            for i, chunk in enumerate(player_chunks):
-                if i == 0:
-                    msg = await ctx.send(chunk)
-                    sent_messages.append(msg)
-                else:
-                    msg = await ctx.send(chunk)
-                    sent_messages.append(msg)
-
-            await player_data.edit(content=player_chunks[0])
-            for chunk in player_chunks[1:]:
-                await ctx.send(chunk)
-
-            marked_player_content = f"```Marked Players:\n{marked_players}```"
-            marked_player_data = await ctx.send("Fetching marked player data...")
-            await marked_player_data.edit(content=marked_player_content)
-            sent_messages.append(marked_player_data)
-            await asyncio.sleep(30)
-            for msg in sent_messages:
+            if player_data:
                 try:
-                    await msg.delete()
+                    await player_data.delete()
                 except:
                     pass
+            if marked_player_data:
+                try:
+                    await marked_player_data.delete()
+                except:
+                    pass
+            if server_info_player_count:
+                try:
+                    await server_info_player_count.delete()
+                except:
+                    pass
+
+            server_info_player_count = await ctx.send(f"```{server_info}```")
+            view = PlayerPaginationView(pages, player_content)
+            player_data = await ctx.send(pages[0], view=view)
+            view.message = player_data
+
+            if marked_players.strip():
+                marked_player_data = await ctx.send(f"```\n{marked_players}```")
+            else:
+                marked_player_data = None
+
+            await asyncio.sleep(30)
+
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
+
 
 #########################################################################################
 

@@ -20,8 +20,9 @@ def message(url):
     server_name = data.get("data", {}).get("attributes", {}).get("name", "Unknown Server")
     players = data.get("included", [])
     player_info = extract_player_info(players)
-
-    server_player_info = f"\nServer: {server_name}\n{len(player_info)} players connected:\n"
+    
+    server_info = f"\nServer: {server_name}\n{len(player_info)} players connected:\n"
+    server_player_info = "Current Players Online:\n"
     marked_players = "Current Marked Players Online:\n"
     for name, player_id in player_info:
         name = clean_string(name)
@@ -35,7 +36,7 @@ def message(url):
         else:
             server_player_info += f"{name} - Player ID: {player_id}\n"
     
-    return server_player_info, marked_players
+    return server_player_info, marked_players, server_info
 
 def clean_string(s):
     return ''.join(e for e in s if e.isprintable()).strip()
