@@ -55,3 +55,26 @@ def get_marked_message(player_id):
         return None
     
 #########################################################################################
+
+def parse_player_content(player_content, min_len=1500, max_len=1600):
+    lines = player_content.splitlines(keepends=True)
+    pages = []
+    current_chunk = "```\n"
+
+    for line in lines:
+        # Check if adding line would go past max_len
+        if len(current_chunk) + len(line) + 3 > max_len:
+            if len(current_chunk) >= min_len:
+                current_chunk += "```"
+                pages.append(current_chunk)
+                current_chunk = "```\n"
+
+        current_chunk += line
+
+    if current_chunk.strip() != "```":
+        current_chunk += "```"
+        pages.append(current_chunk)
+
+    return pages
+
+#########################################################################################

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import asyncio
-from Message_Handling import message
+from Message_Handling import message, parse_player_content
 from DataBase import set_player_message
 from Variables import BOT_TOKEN
 
@@ -88,8 +88,7 @@ async def scan(ctx):
         server_player_info, marked_players, server_info = message(url)
         await ctx.send(f"```{server_info}```")
         player_content = f"\n{server_player_info}"
-        max_chunk = 1500
-        pages = [f"```\n{player_content[i:i+max_chunk]}\n```" for i in range(0, len(player_content), max_chunk)]
+        pages = parse_player_content(player_content)
 
         view = PlayerPaginationView(pages, player_content)
         view.message = await ctx.send(pages[0], view=view)
@@ -145,8 +144,7 @@ async def monitor(ctx):
         while True:
             server_player_info, marked_players, server_info = message(url)
             player_content = f"\n{server_player_info}"
-            max_chunk = 1500
-            pages = [f"```\n{player_content[i:i+max_chunk]}\n```" for i in range(0, len(player_content), max_chunk)]
+            pages = parse_player_content(player_content)
 
             if player_data:
                 try:
