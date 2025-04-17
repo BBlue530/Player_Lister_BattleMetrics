@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ui import View, Button
 import asyncio
 from Message_Handling import message, parse_player_content
-from DataBase import set_player_message
+from DataBase import set_player_message, remove_player_message
 from Variables import BOT_TOKEN
 
 
@@ -184,6 +184,26 @@ async def mark(ctx):
 
         set_player_message(player_id, message_mark)
         await ctx.send(f"Message for player ID: {player_id} Has been marked: {message_mark}")
+
+    except Exception as e:
+        await ctx.send(f"Error: {str(e)}")
+
+#########################################################################################
+
+@bot.command()
+async def unmark(ctx):
+    def check(m):
+        return m.author == ctx.author and isinstance(m.channel, discord.TextChannel)
+    try:
+        await ctx.send("Input Player_ID:")
+        player_id_input = await bot.wait_for('message', check=check, timeout=30.0)
+        player_id = player_id_input.content.strip()
+        if not player_id.isdigit():
+            await ctx.send("Invalid player ID")
+            return
+
+        remove_player_message(player_id)
+        await ctx.send(f"Player ID: {player_id} Has been unmarked")
 
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")

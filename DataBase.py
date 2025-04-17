@@ -18,3 +18,15 @@ def set_player_message(player_id, message):
         print(f"Error setting player message: {e}")
 
 #########################################################################################
+
+def remove_player_message(player_id):
+    try:
+        response = table.delete_item(
+            Key={
+                'Player_ID': player_id,
+            }
+        )
+    except ClientError as e:
+        print(f"Error setting player message: {e}")
+
+#########################################################################################
