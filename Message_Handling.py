@@ -2,7 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 from BattleMetrics import extract_player_info, extract_server_id, get_server_data
 
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name='eu-north-1')
 table = dynamodb.Table('BattleMetrics_Player_Lister')
 
 #########################################################################################
