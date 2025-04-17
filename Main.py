@@ -14,7 +14,9 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 #########################################################################################
 
-class PlayerPaginationView(View):
+# Buttons for the monitor command
+# LISTEN! I know doing it like this is very ugly but it works
+class PlayerPaginationViewMonitor(View):
     def __init__(self, pages, full_data, stop_callback=None, timeout=120):
         super().__init__(timeout=timeout)
         self.pages = pages
@@ -70,6 +72,59 @@ class PlayerPaginationView(View):
             await self.stop_callback()
         self.stop()
 
+#########################################################################################
+
+# Buttons for the scan command
+# LISTEN! I know doing it like this is very ugly but it works
+class PlayerPaginationViewScan(View):
+    def __init__(self, pages, full_data, stop_callback=None, timeout=120):
+        super().__init__(timeout=timeout)
+        self.pages = pages
+        self.full_data = full_data
+        self.current_page = 0
+        self.message = None
+        self.stop_callback = stop_callback
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
+    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+            await interaction.response.edit_message(content=self.pages[self.current_page], view=self)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+            await interaction.response.edit_message(content=self.pages[self.current_page], view=self)
+
+    @discord.ui.button(label="Find", style=discord.ButtonStyle.success)
+    async def find_user(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Enter username:", ephemeral=True)
+
+        def check(m):
+            return m.author == interaction.user and m.channel == interaction.channel
+
+        try:
+            msg = await interaction.client.wait_for('message', check=check, timeout=30.0)
+            username = msg.content.strip().lower()
+
+            found_lines = [line for line in self.full_data.splitlines() if username in line.lower()]
+            if found_lines:
+                result = "```\n" + "\n".join(found_lines) + "\n```"
+            else:
+                result = f"User: '{username}' not found."
+
+            await self.message.channel.send(result)
+
+        except asyncio.TimeoutError:
+            await self.message.channel.send("Request Timeout")
+
 # Option to get pinged if a specific player goes offline
 
 #########################################################################################
@@ -100,7 +155,7 @@ async def scan(ctx):
         player_content = f"\n{server_player_info}"
         pages = parse_player_content(player_content)
 
-        view = PlayerPaginationView(pages, player_content)
+        view = PlayerPaginationViewScan(pages, player_content)
         view.message = await ctx.send(pages[0], view=view)
 
         if marked_players.strip():
@@ -179,7 +234,7 @@ async def monitor(ctx):
                     pass
 
             server_info_player_count = await ctx.send(f"```{server_info}```")
-            view = PlayerPaginationView(pages, player_content, stop_callback=stop_monitoring)
+            view = PlayerPaginationViewMonitor(pages, player_content, stop_callback=stop_monitoring)
             player_data = await ctx.send(pages[0], view=view)
             view.message = player_data
 
