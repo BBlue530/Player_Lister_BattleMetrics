@@ -14,7 +14,6 @@ def set_player_message(player_id, message):
                 'Mark': message
             }
         )
-        print(f"Message for player ID {player_id} successfully updated: {message}")
     except ClientError as e:
         print(f"Error setting player message: {e}")
 

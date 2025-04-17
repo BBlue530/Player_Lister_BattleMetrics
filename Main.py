@@ -15,12 +15,13 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 #########################################################################################
 
 class PlayerPaginationView(View):
-    def __init__(self, pages, full_data, timeout=120):
+    def __init__(self, pages, full_data, stop_callback=None, timeout=120):
         super().__init__(timeout=timeout)
         self.pages = pages
         self.full_data = full_data
         self.current_page = 0
         self.message = None
+        self.stop_callback = stop_callback
 
     async def on_timeout(self):
         for item in self.children:
@@ -40,7 +41,7 @@ class PlayerPaginationView(View):
             self.current_page += 1
             await interaction.response.edit_message(content=self.pages[self.current_page], view=self)
 
-    @discord.ui.button(label="Find", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Find", style=discord.ButtonStyle.success)
     async def find_user(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Enter username:", ephemeral=True)
 
@@ -61,6 +62,15 @@ class PlayerPaginationView(View):
 
         except asyncio.TimeoutError:
             await self.message.channel.send("Request Timeout")
+    
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.danger)
+    async def stop_monitoring(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Monitoring stop", ephemeral=True)
+        if self.stop_callback:
+            await self.stop_callback()
+        self.stop()
+
+# Option to get pinged if a specific player goes offline
 
 #########################################################################################
 
@@ -127,6 +137,7 @@ async def mark(ctx):
 
 @bot.command()
 async def monitor(ctx):
+    
     await ctx.send("Enter BattleMetrics server URL:")
 
     def check(m):
@@ -140,8 +151,13 @@ async def monitor(ctx):
         player_data = None
         marked_player_data = None
         server_info_player_count = None
+        monitoring = True
 
-        while True:
+        async def stop_monitoring():
+            nonlocal monitoring
+            monitoring = False
+
+        while monitoring:
             server_player_info, marked_players, server_info = message(url)
             player_content = f"\n{server_player_info}"
             pages = parse_player_content(player_content)
@@ -163,7 +179,7 @@ async def monitor(ctx):
                     pass
 
             server_info_player_count = await ctx.send(f"```{server_info}```")
-            view = PlayerPaginationView(pages, player_content)
+            view = PlayerPaginationView(pages, player_content, stop_callback=stop_monitoring)
             player_data = await ctx.send(pages[0], view=view)
             view.message = player_data
 
