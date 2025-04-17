@@ -132,9 +132,19 @@ class PlayerPaginationViewScan(View):
 @bot.command()
 async def helpme(ctx):
     try:
-    
-        help_commands = "to use this bot use /scan to scan a server and /mark to mark a player"
+        help_commands = """
+        **Bot Commands List:**
 
+        `!scan` — Scan a server and list all players online and marked players online.
+
+        `!monitor` — Monitor a server and update the list all players online and marked players online every 30 seconds. (You can stop it with the 'Stop' button.)
+
+        `!mark` — Mark a player by their Player_ID with a custom message.
+
+        `!unmark` — Remove marked player by their Player_ID.
+
+        `!helpme` — Show this help message.
+        """
         await ctx.send(help_commands)
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
