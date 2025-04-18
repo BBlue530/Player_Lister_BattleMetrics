@@ -17,7 +17,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 # Buttons for the monitor command
 # LISTEN! I know doing it like this is very ugly but it works
 class PlayerPaginationViewMonitor(View):
-    def __init__(self, pages, full_data, stop_callback=None, timeout=120):
+    def __init__(self, pages, full_data, stop_callback=None, timeout=300):
         super().__init__(timeout=timeout)
         self.pages = pages
         self.full_data = full_data
@@ -77,7 +77,7 @@ class PlayerPaginationViewMonitor(View):
 # Buttons for the scan command
 # LISTEN! I know doing it like this is very ugly but it works
 class PlayerPaginationViewScan(View):
-    def __init__(self, pages, full_data, stop_callback=None, timeout=120):
+    def __init__(self, pages, full_data, stop_callback=None, timeout=300):
         super().__init__(timeout=timeout)
         self.pages = pages
         self.full_data = full_data
@@ -273,7 +273,7 @@ async def monitor(ctx):
             else:
                 marked_player_data = None
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(300)
 
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
